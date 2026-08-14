@@ -11,6 +11,30 @@
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
+  <!-- Layar login: hanya pengguna terdaftar yang bisa masuk -->
+  <div id="login-screen" class="login-screen">
+    <div class="login-card">
+      <div class="login-logo" aria-hidden="true">✉</div>
+      <h1 class="login-title">Generator Pesan Undangan</h1>
+      <p class="login-sub">Masuk untuk mengakses data undangan yang dibagikan.</p>
+      <form id="login-form" class="login-form" autocomplete="on">
+        <div class="field">
+          <label for="login-email">Email</label>
+          <input id="login-email" type="email" placeholder="nama@email.com" required />
+        </div>
+        <div class="field">
+          <label for="login-password">Password</label>
+          <input id="login-password" type="password" placeholder="••••••••" required />
+        </div>
+        <p id="login-error" class="login-error" hidden></p>
+        <button type="submit" id="login-submit" class="btn primary">Masuk</button>
+      </form>
+      <p class="login-foot">Data hanya bisa diakses oleh pengguna yang terdaftar.</p>
+    </div>
+  </div>
+
+  <!-- Aplikasi utama: tersembunyi sampai login berhasil -->
+  <div id="app" hidden>
   <header class="site-header">
     <div class="header-inner">
       <div class="brand">
@@ -20,7 +44,10 @@
           <p class="tagline">Susun pesan sekali, kirim ke banyak tamu via WhatsApp.</p>
         </div>
       </div>
-      <button type="button" id="reset" class="btn ghost">Mulai ulang</button>
+      <div class="header-actions">
+        <button type="button" id="logout" class="btn ghost">Keluar</button>
+        <button type="button" id="reset" class="btn ghost">Mulai ulang</button>
+      </div>
     </div>
   </header>
 
@@ -210,10 +237,11 @@
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <footer class="site-footer">
-    <p>Pesan terkirim secara manual via WhatsApp — data tersimpan hanya di perangkat Anda.</p>
+    <p>Pesan terkirim secara manual via WhatsApp — data dibagikan via Firebase dan hanya bisa diakses pengguna yang login.</p>
   </footer>
+  </div>
 
   <script src="js/config.js"></script>
-  <script src="js/main.js"></script>
+  <script type="module" src="js/main.js"></script>
 </body>
 </html>

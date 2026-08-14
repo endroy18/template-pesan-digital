@@ -1,10 +1,10 @@
-// Generator pesan undangan WhatsApp — logika aplikasi (frontend only).
+// Generator pesan undangan WhatsApp — logika aplikasi.
+// Data disimpan bersama di Firebase Realtime Database; hanya
+// pengguna yang login yang bisa mengakses.
 
-(function () {
-  "use strict";
+import { auth, DATA_REF, set, remove, onValue, onLogin } from "./firebase.js";
 
-  const CONFIG = window.APP_CONFIG;
-  const STORAGE_KEY = "wa-invite-generator:v1";
+const CONFIG = window.APP_CONFIG;
 
   // ---------- State ----------
   const state = {
@@ -73,34 +73,103 @@
     return String(phone ?? "").replace(/\D/g, "");
   }
 
-  // ---------- Persistensi ----------
-  function load() {
+  // ---------- Sinkronisasi Firebase ----------
+  let unsubscribeRemote = null;
+  let remoteTimer = null;
+
+  // Simpan seluruh state (kecuali previewGuestId yang sifatnya per-pengguna)
+  // ke Firebase dengan debounce agar tidak menulis setiap ketukan.
+  function syncStateToRemote() {
+    if (!auth.currentUser) return;
+    const { previewGuestId, ...rest } = state;
+    clearTimeout(remoteTimer);
+    remoteTimer = setTimeout(() => {
+      set(DATA_REF, rest).catch((e) => console.error("Gagal simpan:", e));
+    }, 300);
+  }
+
+  function applyRemote(data) {
+    if (!data) return;
+    state.event = { ...state.event, ...(data.event || {}) };
+    state.eventType = CONFIG.eventTypes.some((x) => x.id === data.eventType)
+      ? data.eventType
+      : "islam";
+    state.templateId = data.templateId || "formal";
+    state.customText = data.customText || "";
+    state.aiText = data.aiText || "";
+    state.aiPrompt = data.aiPrompt || "";
+    state.guests = Array.isArray(data.guests) ? data.guests : [];
+    if (state.previewGuestId && !state.guests.some((g) => g.id === state.previewGuestId)) {
+      state.previewGuestId = state.guests.length ? state.guests[0].id : null;
+    }
+  }
+
+  // Serialisasi dengan kunci terurut agar perbandingan tidak terpengaruh
+  // urutan kunci objek (Firebase mengembalikan kunci secara alfabetis).
+  function stableStringify(value) {
+    if (value === null || typeof value !== "object") return JSON.stringify(value);
+    if (Array.isArray(value)) return "[" + value.map(stableStringify).join(",") + "]";
+    return (
+      "{" +
+      Object.keys(value)
+        .sort()
+        .map((k) => JSON.stringify(k) + ":" + stableStringify(value[k]))
+        .join(",") +
+      "}"
+    );
+  }
+
+  // Langganan real-time ke data bersama; terapkan saat ada perubahan
+  // dari pengguna lain (abaikan perubahan yang berasal dari diri sendiri).
+  function subscribeRemote() {
+    if (unsubscribeRemote) return;
+    unsubscribeRemote = onValue(DATA_REF, (snap) => {
+      const data = snap.val();
+      if (!data) return;
+      const local = stableStringify(stateToRemoteShape());
+      const remote = stableStringify(data);
+      if (local === remote) return; // echo dari penulisan sendiri
+      applyRemote(data);
+      renderAll();
+    });
+  }
+
+  function unsubscribeAndClear() {
+    if (unsubscribeRemote) {
+      unsubscribeRemote();
+      unsubscribeRemote = null;
+    }
+  }
+
+  function stateToRemoteShape() {
+    const { previewGuestId, ...rest } = state;
+    return rest;
+  }
+
+  // ---------- Persistensi lokal (fallback saat offline) ----------
+  const STORAGE_KEY = "wa-invite-generator:v1";
+
+  function loadLocal() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return;
-      const parsed = JSON.parse(raw);
-      state.event = { ...state.event, ...(parsed.event || {}) };
-      state.eventType = parsed.eventType || "islam";
-      state.templateId = parsed.templateId || "formal";
-      state.customText = (parsed.customText || "").replace(/\{akad\}/g, "{acara}");
-      state.aiText = parsed.aiText || "";
-      state.aiPrompt = parsed.aiPrompt || "";
-      state.guests = Array.isArray(parsed.guests) ? parsed.guests : [];
-      state.previewGuestId = parsed.previewGuestId || null;
+      applyRemote(JSON.parse(raw));
     } catch (e) {
       /* abaikan data korup */
     }
-    if (!CONFIG.eventTypes.some((x) => x.id === state.eventType)) {
-      state.eventType = "islam";
+  }
+
+  function saveLocal() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToRemoteShape()));
+    } catch (e) {
+      /* storage penuh / tidak tersedia */
     }
   }
 
   function save() {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch (e) {
-      /* storage penuh / tidak tersedia */
-    }
+    saveLocal();
+    syncStateToRemote();
   }
 
   // ---------- Data tamu ----------
@@ -635,8 +704,13 @@
     });
     $("#copy-all").addEventListener("click", copyAll);
     $("#export-csv").addEventListener("click", exportCSV);
-    $("#reset").addEventListener("click", () => {
+    $("#reset").addEventListener("click", async () => {
       if (!confirm("Hapus semua data tersimpan dan mulai dari awal?")) return;
+      try {
+        await remove(DATA_REF);
+      } catch (e) {
+        /* abaikan */
+      }
       localStorage.removeItem(STORAGE_KEY);
       location.reload();
     });
@@ -669,11 +743,20 @@
 
   // ---------- Init ----------
   function init() {
-    load();
     bindEvents();
     bindEditModal();
-    renderAll();
+
+    onLogin((user) => {
+      if (user) {
+        // Muat data dari Firebase (real-time) saat login.
+        loadLocal();          // fallback cache lokal agar cepat muncul
+        subscribeRemote();
+        renderAll();
+      } else {
+        unsubscribeAndClear();
+        renderAll();
+      }
+    });
   }
 
   document.addEventListener("DOMContentLoaded", init);
-})();
