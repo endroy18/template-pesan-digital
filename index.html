@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Generator Pesan Undangan WhatsApp</title>
+  <meta name="description" content="Buat template pesan undangan otomatis dan kirim via WhatsApp dengan satu klik." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">✉</span>
+        <div>
+          <h1>Generator Pesan Undangan</h1>
+          <p class="tagline">Susun pesan sekali, kirim ke banyak tamu via WhatsApp.</p>
+        </div>
+      </div>
+      <button type="button" id="reset" class="btn ghost">Mulai ulang</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- ===== Kolom kiri: input ===== -->
+    <section class="panel column">
+      <!-- Jenis acara -->
+      <div class="card type-card">
+        <h2 class="card-title">Jenis Acara</h2>
+        <div id="event-type" class="segmented" role="group" aria-label="Jenis acara"></div>
+      </div>
+
+      <!-- Data acara -->
+      <div class="card">
+        <h2 class="card-title"><span class="step">1</span> Data Acara</h2>
+        <form id="event-form" class="form-grid" autocomplete="off">
+          <div class="field">
+            <label for="f-bride">Nama mempelai wanita</label>
+            <input id="f-bride" type="text" placeholder="cth: Sari Dewi" />
+          </div>
+          <div class="field">
+            <label for="f-groom">Nama mempelai pria</label>
+            <input id="f-groom" type="text" placeholder="cth: Budi Santoso" />
+          </div>
+
+          <div class="field">
+            <label for="f-akad-date" id="lbl-akad-date">Tanggal akad</label>
+            <input id="f-akad-date" type="date" />
+          </div>
+          <div class="field">
+            <label for="f-akad-time" id="lbl-akad-time">Jam akad</label>
+            <input id="f-akad-time" type="time" />
+          </div>
+
+          <div class="field" id="resepsi-date-field">
+            <label for="f-resepsi-date">Tanggal resepsi</label>
+            <input id="f-resepsi-date" type="date" />
+          </div>
+          <div class="field" id="resepsi-time-field">
+            <label for="f-resepsi-time">Jam resepsi</label>
+            <input id="f-resepsi-time" type="time" />
+          </div>
+
+          <div class="field">
+            <label for="f-location">Lokasi acara</label>
+            <input id="f-location" type="text" placeholder="cth: Gedung Graha Harmoni, Jakarta" />
+          </div>
+          <div class="field">
+            <label for="f-maps">Link Google Maps</label>
+            <input id="f-maps" type="url" placeholder="https://maps.app.goo.gl/..." />
+          </div>
+
+          <div class="field full">
+            <label for="f-link">Link undangan digital</label>
+            <input id="f-link" type="url" placeholder="https://undanganmu.com/budi-sari" />
+          </div>
+        </form>
+      </div>
+
+      <!-- Template -->
+      <div class="card">
+        <h2 class="card-title"><span class="step">2</span> Template Pesan</h2>
+        <div id="template-options" class="tpl-grid"></div>
+
+        <div id="ai-panel" class="ai-panel" hidden>
+          <div class="field">
+            <label for="ai-prompt">Instruksi (opsional)</label>
+            <textarea id="ai-prompt" rows="3" placeholder="Contoh: buat versi hangat dan akrab, tidak terlalu formal, emoji secukupnya"></textarea>
+          </div>
+          <button type="button" id="ai-generate" class="btn primary">✨ Buat dengan AI</button>
+          <p id="ai-status" class="hint" role="status"></p>
+          <div class="field">
+            <label for="ai-result">Hasil (bisa diedit)</label>
+            <textarea id="ai-result" class="tpl-editor" rows="10" spellcheck="false" placeholder="Hasil template AI akan muncul di sini."></textarea>
+          </div>
+        </div>
+
+        <textarea id="template-editor" class="tpl-editor" rows="10" spellcheck="false" hidden></textarea>
+        <p id="template-editor-note" class="hint" hidden>
+          Klik placeholder di bawah untuk menyisipkannya ke posisi kursor.
+        </p>
+        <div class="placeholder-block">
+          <span class="placeholder-label">Placeholder:</span>
+          <div id="placeholder-list" class="placeholder-list"></div>
+        </div>
+      </div>
+
+      <!-- Daftar tamu -->
+      <div class="card">
+        <div class="card-head">
+          <h2 class="card-title"><span class="step">3</span> Daftar Tamu</h2>
+          <span id="guest-count" class="badge">belum ada tamu</span>
+        </div>
+
+        <form id="guest-form" class="guest-form" autocomplete="off">
+          <input id="g-name" type="text" placeholder="Nama tamu" aria-label="Nama tamu" />
+          <input id="g-greeting" type="text" placeholder="Sapaan (Bapak/Ibu)" aria-label="Sapaan" />
+          <input id="g-phone" type="tel" placeholder="Nomor WA (62...)" aria-label="Nomor WhatsApp" />
+          <button type="submit" class="btn primary">Tambah</button>
+        </form>
+        <p class="hint">Nomor WA memakai kode negara, cth: 628123456789. Boleh dikosongkan.</p>
+
+        <p id="guest-empty" class="empty-note">Belum ada tamu. Tambahkan tamu pertama untuk melihat preview pesan.</p>
+        <ul id="guest-list" class="guest-list"></ul>
+      </div>
+    </section>
+
+    <!-- ===== Kolom kanan: preview & output ===== -->
+    <section class="panel column sticky">
+      <div class="card">
+        <h2 class="card-title">Pratinjau</h2>
+
+        <div class="preview-controls">
+          <select id="preview-guest" class="select"></select>
+        </div>
+
+        <div class="phone">
+          <div class="phone-top">
+            <span class="phone-back" aria-hidden="true">←</span>
+            <div class="phone-avatar" aria-hidden="true">✉</div>
+            <div class="phone-title">
+              <strong id="preview-name">Contoh tamu</strong>
+              <small id="preview-meta">Belum ada tamu</small>
+            </div>
+          </div>
+          <div class="phone-screen">
+            <p id="preview-empty" class="preview-empty" hidden>Tidak ada pesan untuk ditampilkan.</p>
+            <div class="bubble">
+              <span class="bubble-text" id="preview-bubble"></span>
+              <span class="bubble-time" id="preview-time"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="card-title">Kirim</h2>
+        <label class="field">
+          <span>Pesan jadi</span>
+          <textarea id="out-message" class="out-message" rows="6" readonly></textarea>
+        </label>
+        <label class="field">
+          <span>Link WhatsApp</span>
+          <input id="out-link" type="text" readonly />
+        </label>
+
+        <div class="btn-row">
+          <button type="button" id="copy-message" class="btn">Salin pesan</button>
+          <button type="button" id="copy-link" class="btn">Salin link</button>
+          <button type="button" id="send-wa" class="btn primary">Kirim via WhatsApp ↗</button>
+        </div>
+
+        <div id="bulk-actions" class="bulk" hidden>
+          <span class="hint">Untuk semua tamu:</span>
+          <div class="btn-row">
+            <button type="button" id="copy-all" class="btn">Salin semua pesan</button>
+            <button type="button" id="export-csv" class="btn">Export CSV</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal edit tamu -->
+  <dialog id="edit-modal" class="modal">
+    <form id="edit-form" method="dialog" class="modal-box" autocomplete="off">
+      <h2 class="card-title">Edit Tamu</h2>
+      <div class="field">
+        <label for="edit-name">Nama</label>
+        <input id="edit-name" type="text" />
+      </div>
+      <div class="field">
+        <label for="edit-greeting">Sapaan</label>
+        <input id="edit-greeting" type="text" placeholder="Bapak/Ibu" />
+      </div>
+      <div class="field">
+        <label for="edit-phone">Nomor WA</label>
+        <input id="edit-phone" type="tel" placeholder="62..." />
+      </div>
+      <div class="btn-row">
+        <button type="button" id="edit-cancel" class="btn">Batal</button>
+        <button type="submit" class="btn primary">Simpan</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <footer class="site-footer">
+    <p>Pesan terkirim secara manual via WhatsApp — data tersimpan hanya di perangkat Anda.</p>
+  </footer>
+
+  <script src="js/config.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{
+  "name": "generator-pesan-undangan",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Generator template pesan undangan WhatsApp",
+  "scripts": {
+    "dev": "node server.js"
+  }
+}

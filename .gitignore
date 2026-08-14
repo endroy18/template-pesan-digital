@@ -1,0 +1,10 @@
+# dependencies
+node_modules/
+
+# vercel
+.vercel/
+
+# environment — jangan pernah commit API key
+.env
+.env.local
+.env.*.local
