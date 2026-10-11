@@ -144,7 +144,10 @@
 
         <form id="guest-form" class="guest-form" autocomplete="off">
           <input id="g-name" type="text" placeholder="Nama tamu" aria-label="Nama tamu" />
-          <input id="g-greeting" type="text" placeholder="Sapaan (Bapak/Ibu)" aria-label="Sapaan" />
+          <select id="g-greeting" aria-label="Sapaan">
+            <option value="Bapak/Saudara">Bapak/Saudara</option>
+            <option value="Ibu/Saudari">Ibu/Saudari</option>
+          </select>
           <input id="g-phone" type="tel" placeholder="Nomor WA (62...)" aria-label="Nomor WhatsApp" />
           <button type="submit" class="btn primary">Tambah</button>
         </form>
@@ -221,7 +224,10 @@
       </div>
       <div class="field">
         <label for="edit-greeting">Sapaan</label>
-        <input id="edit-greeting" type="text" placeholder="Bapak/Ibu" />
+        <select id="edit-greeting">
+          <option value="Bapak/Saudara">Bapak/Saudara</option>
+          <option value="Ibu/Saudari">Ibu/Saudari</option>
+        </select>
       </div>
       <div class="field">
         <label for="edit-phone">Nomor WA</label>

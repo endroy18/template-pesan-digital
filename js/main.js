@@ -6,6 +6,9 @@ import { auth, DATA_REF, set, remove, onValue, onLogin } from "./firebase.js";
 
 const CONFIG = window.APP_CONFIG;
 
+// Sapaan yang tersedia untuk tamu (pilihan dropdown, bukan teks bebas).
+const GREETINGS = ["Bapak/Saudara", "Ibu/Saudari"];
+
   // ---------- State ----------
   const state = {
     event: {
@@ -223,7 +226,7 @@ const CONFIG = window.APP_CONFIG;
   function buildMessage(guest) {
     const e = state.event;
     const data = {
-      s: (guest && guest.greeting.trim()) || "Bapak/Ibu",
+      s: (guest && guest.greeting.trim()) || GREETINGS[0],
       nama: (guest && guest.name.trim()) || "",
       nama_url: encodeURIComponent((guest && guest.name.trim()) || ""),
       pengantin: coupleName(),
@@ -460,7 +463,7 @@ const CONFIG = window.APP_CONFIG;
       "",
       "HANYA gunakan placeholder berikut (dari Data Acara & Daftar Tamu), jangan buat placeholder lain:",
       "Data acara: {pengantin} = nama lengkap pasangan, {panggilan} = nama depan/panggilan, {acara}, {resepsi}, {lokasi}, {maps}, {link}.",
-      "Daftar tamu: {s} = sapaan (Bapak/Ibu/Saudara/i), {nama} = nama lengkap tamu, {nama_url} = nama tamu untuk URL.",
+      "Daftar tamu: {s} = sapaan tamu (hanya \"Bapak/Saudara\" atau \"Ibu/Saudari\"), {nama} = nama lengkap tamu, {nama_url} = nama tamu untuk URL.",
       "Untuk link undangan, gunakan \"{link}?to={nama_url}\".",
       "",
       "Aturan agar pesan tidak berulang:",
@@ -721,7 +724,7 @@ const CONFIG = window.APP_CONFIG;
     const g = getGuest(id);
     if (!g) return;
     $("#edit-name").value = g.name;
-    $("#edit-greeting").value = g.greeting;
+    $("#edit-greeting").value = GREETINGS.includes(g.greeting) ? g.greeting : GREETINGS[0];
     $("#edit-phone").value = g.phone;
     $("#edit-modal").dataset.id = id;
     $("#edit-modal").showModal();
